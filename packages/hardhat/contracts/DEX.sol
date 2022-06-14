@@ -3,6 +3,7 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "hardhat/console.sol";
 
 /**
  * @title DEX
@@ -55,6 +56,7 @@ contract DEX {
     /* ========== CONSTRUCTOR ========== */
 
     constructor(address token_addr) public {
+        console.log("Deployment address: ",token_addr);
         token = IERC20(token_addr); //specifies the token address that will hook into the interface and be used through the variable 'token'
     }
 
@@ -70,6 +72,8 @@ contract DEX {
         require(totalLiquidity == 0, "DEX: init - already has liquidity");
         totalLiquidity = address(this).balance;
         liquidity[msg.sender] = totalLiquidity;
+
+        // Transfers token from the deployer to the contract!
         require(token.transferFrom(msg.sender, address(this), tokens), "DEX: init - transfer did not transact");
         return totalLiquidity;
     }
@@ -93,6 +97,7 @@ contract DEX {
      */
     function ethToToken() public payable returns (uint256 tokenOutput) {
         //  require(msg.value > 0, "ethToToken: can't trade 0");
+        //Multiplying by 997 and 1000 determines the fee percentage :)
         uint256 ethReserve = address(this).balance.sub(msg.value);
         uint256 token_reserve = token.balanceOf(address(this));
         uint256 tokenOutput = price(msg.value, ethReserve, token_reserve);
@@ -125,6 +130,8 @@ contract DEX {
      * NOTE: Ratio needs to be maintained.
      */
     function deposit() public payable returns (uint256 tokensDeposited) {
+
+        // This gets the balance of the contract BEFORE eth was deposited?
         uint256 ethReserve = address(this).balance.sub(msg.value);
         uint256 tokenReserve = token.balanceOf(address(this));
         uint256 tokenDeposit;
